@@ -6,8 +6,8 @@ Java调用rust 示例
 - jna方式
 
 ### 环境准备
-java11+
-rust
+- java11+
+- rust
 
 ### rust构建命令
 ```
