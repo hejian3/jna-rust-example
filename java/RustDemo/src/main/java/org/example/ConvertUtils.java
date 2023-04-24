@@ -20,6 +20,8 @@ public class ConvertUtils {
     private static final String TEMP_DIR = System.getProperty(JAVA_IO_TMPDIR);
     private static final String JNA_LIBRARY_PATH = "jna.library.path";
 
+    private static final String SPRING_JAR = "BOOT-INF/classes";
+
     public static void main(String[] args) throws URISyntaxException, IOException {
         System.setProperty("jna.encoding", "UTF-8");
         String jnaLibraryPath = getJnaLibraryPath();
@@ -30,13 +32,23 @@ public class ConvertUtils {
         System.out.println(ConvertUtils.DLL.INSTANCE.boo("1world1"));
         System.out.println(ConvertUtils.DLL.INSTANCE.boo("world"));
 
+        DLL.INSTANCE.convert_shapefile(jnaLibraryPath, "C:\\Users\\hejian\\Desktop\\440000.shp", "D:\\b3dm\\1.glb","10");
+        DLL.INSTANCE.convert_gltf(jnaLibraryPath, "C:\\Users\\hejian\\Desktop\\OSGB\\Data\\Tile_+002_-002\\Tile_+002_-002.osgb", "D:\\b3dm\\2.glb");
+        DLL.INSTANCE.convert_b3dm(jnaLibraryPath, "D:\\Tile_+002_-002.b3dm", "D:\\b3dm\\3.glb");
         DLL.INSTANCE.convert_osgb(jnaLibraryPath, "C:\\Users\\hejian\\Desktop\\OSGB", "D:\\osgb2", "");
     }
 
     private static String getJnaLibraryPath() throws URISyntaxException, IOException {
-        System.out.println(Platform.RESOURCE_PREFIX);
         URL current_jar_dir = ConvertUtils.class.getProtectionDomain().getCodeSource().getLocation();
-        Path jar_path = Paths.get(current_jar_dir.toURI());
+        System.out.println("current_jar_dir = " + current_jar_dir);
+        Path jar_path;
+        String path = Platform.RESOURCE_PREFIX;
+        if (current_jar_dir.getPath().contains(SPRING_JAR)) {
+            jar_path = Paths.get(current_jar_dir.toString().substring(10, current_jar_dir.toString().indexOf(SPRING_JAR) - 2));
+            path = SPRING_JAR + "/" + Platform.RESOURCE_PREFIX;
+        } else {
+            jar_path = Paths.get(current_jar_dir.toURI());
+        }
         String folderContainingJar = jar_path.getParent().toString();
         ResourceCopy r = new ResourceCopy();
         Optional<JarFile> jar = r.jar(ConvertUtils.class);
@@ -44,12 +56,12 @@ public class ConvertUtils {
             try {
                 System.out.println("JAR detected");
                 File target_dir = new File(folderContainingJar);
-                System.out.println(String.format("Trying copy from %s %s to %s", jar.get().getName(), Platform.RESOURCE_PREFIX, target_dir));
+                System.out.println(String.format("Trying copy from %s %s to %s", jar.get().getName(), path, target_dir));
                 // perform dir copy
-                r.copyResourceDirectory(jar.get(), Platform.RESOURCE_PREFIX, target_dir);
+                r.copyResourceDirectory(jar.get(), path, target_dir);
                 // add created folders to JNA lib loading path
-                System.setProperty(JNA_LIBRARY_PATH, target_dir.getCanonicalPath().toString());
-                return target_dir.getCanonicalPath().toString();
+                System.setProperty(JNA_LIBRARY_PATH, target_dir.getCanonicalPath());
+                return target_dir.getCanonicalPath();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -63,13 +75,13 @@ public class ConvertUtils {
 
         int foo(int a, int b);
 
-        void convert_b3dm(String libPath, String input, String output);
+        int convert_b3dm(String libPath, String input, String output);
 
-        void convert_gltf(String libPath, String input, String output);
+        int convert_gltf(String libPath, String input, String output);
 
-        void convert_osgb(String libPath, String input, String output, String tileConfig);
+        int convert_osgb(String libPath, String input, String output, String tileConfig);
 
-        void convert_shapefile(String libPath, String input, String output, String heightField);
+        int convert_shapefile(String libPath, String input, String output, String heightField);
 
     }
 }
